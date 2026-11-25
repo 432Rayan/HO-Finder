@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<!-- Don't you all feel I deserve 200K? Right? -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HO Finder</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #eaf1f7; color: #1f2a26; line-height: 1.6;
+    display: flex; justify-content: center; padding: 20px 14px;
+    min-height: 100vh;
+  }
+  .card {
+    background: #fff; width: 100%; max-width: 460px; align-self: flex-start;
+    border-radius: 22px; overflow: hidden;
+    box-shadow: 0 10px 30px rgba(60, 100, 140, .12);
+  }
+  .hero {
+    background: linear-gradient(135deg, #e8f2fb 0%, #c9e0f4 100%);
+    color: #27435c; padding: 30px 24px 26px;
+  }
+  .hero h1 { font-size: 1.6rem; letter-spacing: .2px; display: flex; align-items: center; gap: 10px; }
+  .hero h1 svg { flex: none; }
+  .hero p { margin-top: 8px; font-size: .95rem; color: #4d6a86; }
+  .body { padding: 22px 22px 26px; }
+  h2 { font-size: .8rem; text-transform: uppercase; letter-spacing: 1.2px; color: #6b8199; margin-bottom: 12px; }
+  .btn {
+    display: inline-block; border: none; cursor: pointer; text-decoration: none;
+    border-radius: 12px; padding: 13px 20px; font-size: 1rem; font-weight: 600;
+    font-family: inherit; white-space: nowrap; transition: filter .15s;
+  }
+  .btn:active { filter: brightness(.92); }
+  .btn-primary { background: #4a7bab; color: #fff; width: 100%; margin-bottom: 14px;
+    box-shadow: 0 4px 12px rgba(74, 123, 171, .30); }
+  .btn-primary:disabled { background: #a9bfd2; box-shadow: none; cursor: default; }
+  .btn-secondary { background: #fff; color: #4a7bab; border: 1.5px solid #4a7bab; }
+  .row { display: flex; gap: 8px; }
+  .row input {
+    flex: 1; min-width: 0; border: 1.5px solid #d3e0ea; border-radius: 12px; padding: 12px 14px;
+    font-size: 1rem; font-family: inherit; background: #fbfdfe;
+  }
+  .row input:focus { outline: 2px solid #4a7bab44; border-color: #4a7bab; }
+  .row .btn { padding: 12px 16px; }
+  label.hint { display: block; font-size: .85rem; color: #6b8199; margin-bottom: 6px; }
+  .callout { border-radius: 12px; padding: 12px 14px; margin-top: 16px; font-size: .9rem; }
+  .callout.warn { background: #fdf3e7; border-left: 3px solid #c98a2d; }
+  .callout.note { background: #e9f2fa; border-left: 3px solid #4a7bab; color: #33506b; }
+  .callout b { display: block; margin-bottom: 2px; }
+  .result { margin-top: 24px; border-top: 1px solid #e2ecf3; padding-top: 20px; }
+  .office-name { font-size: 1.35rem; font-weight: 700; color: #27435c; }
+  .office-area { color: #6b8199; font-size: .9rem; margin: 2px 0 14px; }
+  .pill {
+    display: inline-block; background: #dcebf8; color: #27435c; font-weight: 700;
+    border-radius: 999px; padding: 4px 12px; font-size: .85rem; margin-bottom: 14px;
+  }
+  table.facts { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+  table.facts td { padding: 11px 4px; border-bottom: 1px solid #e7eff5; font-size: .95rem; }
+  table.facts td:first-child { color: #6b8199; }
+  table.facts td:last-child { font-weight: 600; text-align: right; }
+  .actions { display: flex; flex-direction: column; gap: 10px; }
+  .actions .btn { width: 100%; text-align: center; margin-bottom: 0; }
+  .next { margin-top: 16px; font-size: .88rem; color: #4d6478; }
+  .sig { text-align: center; margin-top: 22px; font-size: .68rem; color: #aec2d1; letter-spacing: .4px; }
+
+  .langbtn { float: right; background: rgba(255,255,255,.7); color: #27435c; border: 1.5px solid #8fb2d1; border-radius: 999px; padding: 5px 14px; font-size: .85rem; font-weight: 700; cursor: pointer; font-family: inherit; }
+  .tools { display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 14px; }
+  .langbtn, .themebtn { float: none !important; margin: 0 !important; }
+
+  .toggleWrapper { overflow: hidden; line-height: 0; width: 56px; height: 31px; }
+  .toggleWrapper input { position: absolute; left: -99em; }
+  .toggle { transform: scale(.62); transform-origin: top left; cursor: pointer; display: inline-block; position: relative; width: 90px; height: 50px; background-color: #83D8FF; border-radius: 84px; transition: background-color 200ms cubic-bezier(0.445, 0.05, 0.55, 0.95); }
+  .toggle__handler { display: inline-block; position: relative; z-index: 1; top: 3px; left: 3px; width: 44px; height: 44px; background-color: #FFCF96; border-radius: 50px; box-shadow: 0 2px 6px rgba(0,0,0,.3); transition: all 400ms cubic-bezier(0.68, -0.55, 0.265, 1.55); transform: rotate(-45deg); }
+  .crater { position: absolute; background-color: #E8CDA5; opacity: 0; transition: opacity 200ms ease-in-out; border-radius: 100%; }
+  .crater--1 { top: 18px; left: 10px; width: 4px; height: 4px; }
+  .crater--2 { top: 28px; left: 22px; width: 6px; height: 6px; }
+  .crater--3 { top: 10px; left: 25px; width: 8px; height: 8px; }
+  .star { position: absolute; background-color: #fff; transition: all 300ms cubic-bezier(0.445, 0.05, 0.55, 0.95); border-radius: 50%; }
+  .star--1 { top: 10px; left: 35px; z-index: 0; width: 30px; height: 3px; }
+  .star--2 { top: 18px; left: 28px; z-index: 1; width: 30px; height: 3px; }
+  .star--3 { top: 27px; left: 40px; z-index: 0; width: 30px; height: 3px; }
+  .star--4, .star--5, .star--6 { opacity: 0; transition: all 300ms 0s cubic-bezier(0.445, 0.05, 0.55, 0.95); }
+  .star--4 { top: 16px; left: 11px; z-index: 0; width: 2px; height: 2px; transform: translate3d(3px,0,0); }
+  .star--5 { top: 32px; left: 17px; z-index: 0; width: 3px; height: 3px; transform: translate3d(3px,0,0); }
+  .star--6 { top: 36px; left: 28px; z-index: 0; width: 2px; height: 2px; transform: translate3d(3px,0,0); }
+  input:checked + .toggle { background-color: #749DD6; }
+  input:checked + .toggle .toggle__handler { background-color: #FFE5B5; transform: translate3d(40px,0,0) rotate(0); }
+  input:checked + .toggle .crater { opacity: 1; }
+  input:checked + .toggle .star--1 { width: 2px; height: 2px; }
+  input:checked + .toggle .star--2 { width: 4px; height: 4px; transform: translate3d(-5px,0,0); }
+  input:checked + .toggle .star--3 { width: 2px; height: 2px; transform: translate3d(-7px,0,0); }
+  input:checked + .toggle .star--4, input:checked + .toggle .star--5, input:checked + .toggle .star--6 { opacity: 1; transform: translate3d(0,0,0); }
+  input:checked + .toggle .star--4 { transition: all 300ms 200ms cubic-bezier(0.445, 0.05, 0.55, 0.95); }
+  input:checked + .toggle .star--5 { transition: all 300ms 300ms cubic-bezier(0.445, 0.05, 0.55, 0.95); }
+  input:checked + .toggle .star--6 { transition: all 300ms 400ms cubic-bezier(0.445, 0.05, 0.55, 0.95); }
+  .tools { align-items: center; }
+  .divider { border: none; border-top: 1px solid #e2ecf3; margin: 24px 0 18px; }
+  .list { margin-top: 12px; max-height: 340px; overflow-y: auto; border: 1.5px solid #d3e0ea; border-radius: 12px; }
+  .list .zh { position: sticky; top: 0; background: #e8f2fb; color: #27435c; font-size: .75rem; font-weight: 700; letter-spacing: .8px; padding: 6px 14px; }
+  .list .item { display: block; width: 100%; text-align: start; background: #fff; border: none; border-bottom: 1px solid #edf3f8; padding: 11px 14px; font-family: inherit; font-size: .95rem; color: #1f2a26; cursor: pointer; }
+  .list .item small { display: block; color: #6b8199; font-size: .8rem; }
+  .list .item:active, .list .item.sel { background: #dcebf8; }
+  .list .empty { padding: 16px; color: #6b8199; font-size: .9rem; text-align: center; }
+  [dir=rtl] table.facts td:last-child { text-align: left; }
+  [dir=rtl] .langbtn { float: left; }
+  .themebtn { float: right; margin-left: 8px; margin-right: 0; background: rgba(255,255,255,.7); color: #27435c; border: 1.5px solid #8fb2d1; border-radius: 999px; padding: 5px 12px; font-size: .85rem; font-weight: 700; cursor: pointer; font-family: inherit; }
+  [dir=rtl] .themebtn { float: left; margin-left: 0; margin-right: 8px; }
+  body.dark { background: #0f1720; color: #e3ebf2; }
+  body.dark .card { background: #172230; box-shadow: 0 10px 30px rgba(0,0,0,.4); }
+  body.dark .hero { background: linear-gradient(135deg, #1d3247 0%, #26435e 100%); color: #e3ebf2; }
+  body.dark .hero p { color: #a9c0d6; }
+  body.dark .hero h1 svg path { fill: #e3ebf2; }
+  body.dark .langbtn, body.dark .themebtn { background: rgba(0,0,0,.25); color: #e3ebf2; border-color: #5d7f9f; }
+  body.dark h2, body.dark label.hint, body.dark .office-area, body.dark table.facts td:first-child, body.dark .list .item small, body.dark .list .empty { color: #8fa8bf; }
+  body.dark .row input { background: #0f1923; color: #e3ebf2; border-color: #2e445a; }
+  body.dark .btn-secondary { background: transparent; color: #8fc0ee; border-color: #5d8fbf; }
+  body.dark .btn-primary { background: #3f77a8; }
+  body.dark .btn-primary:disabled { background: #2c4157; }
+  body.dark .result, body.dark .divider { border-color: #2a3d50; }
+  body.dark .office-name { color: #e3ebf2; }
+  body.dark .pill { background: #26435e; color: #dbe9f6; }
+  body.dark table.facts td { border-color: #26384a; }
+  body.dark .callout.warn { background: #3a2f1e; color: #f0dcc0; }
+  body.dark .callout.note, body.dark .next { background: transparent; color: #a9c0d6; }
+  body.dark .list { border-color: #2e445a; }
+  body.dark .list .zh { background: #1f3449; color: #cfe2f4; }
+  body.dark .list .item { background: #172230; color: #e3ebf2; border-color: #22364a; }
+  body.dark .list .item:active, body.dark .list .item.sel { background: #26435e; }
+  body.dark .sig { color: #4d6479; }
+
+  #geoBtn { display: none !important; }
+  .slide { position: relative; height: 60px; border-radius: 999px; margin-bottom: 14px; overflow: hidden; user-select: none; -webkit-user-select: none; touch-action: pan-y;
+    background: linear-gradient(135deg, #e3eefa, #cfe1f4); border: 1px solid rgba(74,123,171,.35); box-shadow: inset 0 2px 6px rgba(58,98,140,.15); }
+  .slide, .slide * { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  .slide ::selection { background: transparent; }
+  .slide .fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; border-radius: 999px; background: linear-gradient(90deg, #8db5dc, #4a7bab); }
+  .slide .lbl { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding-left: 40px; font-weight: 600; font-size: .95rem; color: #3a628c; letter-spacing: .3px; pointer-events: none; }
+  .slide .lbl span { background: linear-gradient(100deg, #3a628c 35%, #9fc3e6 50%, #3a628c 65%); background-size: 250% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: slShimmer 2.8s linear infinite; }
+  @keyframes slShimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+  .slide .handle { position: absolute; left: 4px; top: 4px; width: 50px; height: 50px; border-radius: 50%; background: #fff; color: #4a7bab; display: flex; align-items: center; justify-content: center; cursor: grab; touch-action: none;
+    box-shadow: 0 4px 12px rgba(58,98,140,.35); z-index: 2; }
+  .slide .handle:active { cursor: grabbing; }
+  .slide .handle svg { display: block; }
+  .slide.snap .handle, .slide.snap .fill, .slide.snap .lbl { transition: transform .35s cubic-bezier(.34,1.4,.64,1), width .35s cubic-bezier(.34,1.4,.64,1), opacity .25s; }
+  .slide.busy .lbl span { animation: none; background: none; color: #fff; -webkit-text-fill-color: #fff; }
+  .slide.busy .handle { animation: slPulse 1.2s ease-in-out infinite; }
+  @keyframes slPulse { 50% { box-shadow: 0 4px 12px rgba(58,98,140,.35), 0 0 0 9px rgba(255,255,255,.28); } }
+  body.dark .slide { background: linear-gradient(135deg, #1b2c3e, #16283a); border-color: rgba(143,192,238,.3); box-shadow: inset 0 2px 8px rgba(0,0,0,.4); }
+  body.dark .slide .fill { background: linear-gradient(90deg, #2f5c87, #4a8bc4); }
+  body.dark .slide .lbl span { background-image: linear-gradient(100deg, #8fc0ee 35%, #e6f2fd 50%, #8fc0ee 65%); }
+  body.dark .slide .handle { background: #8fc0ee; color: #16283a; box-shadow: 0 4px 14px rgba(0,0,0,.5), 0 0 14px rgba(79,142,200,.35); }
+  body.dark .slide.busy .lbl span { background: none; color: #fff; -webkit-text-fill-color: #fff; }
+  @media (prefers-reduced-motion: reduce) { .slide .lbl span { animation: none; } }
+
+  .slide { background: linear-gradient(135deg, rgba(235,244,252,.9), rgba(200,222,243,.55)); border: 1px solid rgba(255,255,255,.9); box-shadow: 0 0 0 1px rgba(74,123,171,.25), 0 8px 24px rgba(106,155,201,.25), inset 0 1px 3px rgba(255,255,255,.9); }
+  .slide .fill { background: linear-gradient(90deg, rgba(141,181,220,.15), rgba(106,155,201,.75)); box-shadow: 8px 0 22px 2px rgba(120,176,232,.65); }
+  .slide .handle { background: linear-gradient(145deg, rgba(255,255,255,.95), rgba(255,255,255,.55)); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,.95); color: #3a628c; box-shadow: 0 6px 18px rgba(74,123,171,.45), 0 0 18px rgba(143,192,238,.7), inset 0 1px 0 #fff, inset 0 -6px 10px rgba(143,192,238,.35); }
+  body.dark .slide { background: linear-gradient(135deg, rgba(40,66,92,.55), rgba(22,40,58,.7)); border-color: rgba(143,192,238,.35); box-shadow: 0 8px 26px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.12); }
+  body.dark .slide .fill { background: linear-gradient(90deg, rgba(79,142,200,.1), rgba(79,142,200,.8)); box-shadow: 8px 0 24px 2px rgba(79,142,200,.6); }
+  body.dark .slide .handle { background: linear-gradient(145deg, rgba(190,222,250,.55), rgba(143,192,238,.2)); border-color: rgba(200,228,252,.55); color: #e6f2fd; box-shadow: 0 6px 18px rgba(0,0,0,.5), 0 0 20px rgba(79,142,200,.7), inset 0 1px 0 rgba(255,255,255,.4); }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="hero">
+    <div class="tools"><div class="toggleWrapper"><input type="checkbox" class="dn" id="dn" aria-label="Dark mode"/><label for="dn" class="toggle"><span class="toggle__handler"><span class="crater crater--1"></span><span class="crater crater--2"></span><span class="crater crater--3"></span></span><span class="star star--1"></span><span class="star star--2"></span><span class="star star--3"></span><span class="star star--4"></span><span class="star star--5"></span><span class="star star--6"></span></label></div></div>
+    <h1><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z" fill="#27435c"/></svg><span data-i="title">HO Finder</span></h1>
+    <p data-i="sub"></p>
+  </div>
+  <div class="body">
+    <h2 data-i="browseH"></h2>
+    <div class="row">
+      <input id="searchInput" type="search" data-iph="searchPh" autocomplete="off">
+    </div>
+    <div id="officeList" class="list"></div>
+
+    <div id="errorBox" class="callout warn" style="display:none"><b id="errorTitle"></b><span id="errorMsg"></span></div>
+
+    <div id="resultBox" class="result" style="display:none">
+      <h2 id="resH"></h2>
+      <div class="callout warn" id="hospNote" style="display:none;margin-bottom:10px"></div>
+      <p class="office-name" id="officeName"></p>
+      <p class="office-area" id="officeArea"></p>
+      <span class="pill" id="distPill"></span>
+      <table class="facts"><tbody id="factsBody"></tbody></table>
+      <div class="actions">
+        <a id="callBtn" class="btn btn-secondary" href="#" data-i="call"></a>
+        <a id="waBtn" class="btn btn-primary" href="#" target="_blank" rel="noopener" data-i="wa"></a>
+        <a id="mapBtn" class="btn btn-secondary" href="#" target="_blank" rel="noopener" data-i="map"></a>
+      </div>
+      <p class="next" id="nextLine"></p>
+    </div>
+
+    <hr class="divider">
+    <h2 data-i="locH"></h2>
+    <button id="geoBtn" class="btn btn-primary geo" type="button"></button>
+    <div class="slide" id="slide"><div class="fill" id="slFill"></div><div class="lbl"><span id="slLbl"></span></div><div class="handle" id="slHandle" role="button" tabindex="0" aria-label="Slide to use my current location"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></div></div>
+    <label class="hint" for="linkInput" data-i="linkHint"></label>
+    <div class="row">
+      <input id="linkInput" type="text" inputmode="text" placeholder="30.0444, 31.2357">
+      <button id="goBtn" class="btn btn-secondary" type="button"></button>
+    </div>
+
+    <p class="sig">Rayan</p>
+  </div>
+</div>
+
+<script>
+const OFFICES = [{"zone": "Zone 1", "nb": "Dar El Salam", "name": "Dar Al-Salam HO (جزيرة دار السلام)", "worker": "Mahmoud", "phone": "01118373300", "comm": 100, "fam": "No", "map": "https://maps.google.com/?q=%D9%85%D9%83%D8%AA%D8%A8+%D8%A7%D9%84%D8%B5%D8%AD%D8%A9+%D8%AF%D8%A7%D8%B1+%D8%A7%D9%84%D8%B3%D9%84%D8%A7%D9%85,+Athar+an+Nabi,+Old+Cairo,+Cairo+Governorate&ftid=0x145847db0295b9a7:0xcb2bc10affcef547&hl=en&gl=uk&shorturl=1", "lat": 29.98431, "lng": 31.237211}, {"zone": "Zone 1", "nb": "Dar El Salam", "name": "Dar Al salam ( ابو اشرف)", "worker": "Nasra", "phone": "01007370933", "comm": 100, "fam": "No", "map": "https://www.google.com/maps/place/%D8%A3%D8%A8%D9%88+%D8%A8%D9%83%D8%B1+%D8%A7%D9%84%D8%B5%D8%AF%D9%8A%D9%82%D8%8C+%D8%AF%D8%A7%D8%B1+%D8%A7%D9%84%D8%B3%D9%84%D8%A7%D9%85%D8%8C+%D9%82%D8%B3%D9%85+%D8%AF%D8%A7%D8%B1+%D8%A7%D9%84%D8%B3%D9%84%D8%A7%D9%85%D8%8C+%D9%85%D8%AD%D8%A7%D9%81%D8%B8%D8%A9+%D8%A7%D9%84%D9%82%D8%A7%D9%87%D8%B1%D8%A9%E2%80%AC+4224215%E2%80%AD/data=!4m6!3m5!1s0x14584778011d4b81:0x6b240bd9c580cc2a!7e2!8m2!3d29.9877947!4d31.2513996?utm_source=mstt_1&entry=gps&g_ep=CAESCTExLjc5LjMwMRgAIIgnKgBCAkVH", "lat": 29.987795, "lng": 31.2514}, {"zone": "Zone 1", "nb": "Sheikh Zayed", "name": "Sheikh Zayed", "worker": "Dr.Helmy", "phone": "01009905209", "comm": 150, "fam": "Yes", "map": "https://maps.google.com/?q=2XXH+FCG+%D9%85%D9%83%D8%AA%D8%A8+%D8%B5%D8%AD%D9%87+%D8%A7%D9%84%D8%B4%D9%8A%D8%AE+%D8%B2%D8%A7%D9%8A%D8%AF%D8%8C+%D8%A7%D9%84%D8%B4%D8%A8%D8%A7%D8%A8%D8%8C+%D9%82%D8%B3%D9%85+%D8%A7%D9%84%D8%B4%D9%8A%D8%AE+%D8%B2%D8%A7%D9%8A%D8%AF%D8%8C,+Sheikh+Zayed+City,+Giza+Governorate+12411&ftid=0x1458599d70ed1f71:0x5d7956cdf797a525&hl=en-SA&gl=sa&entry=gps&lucs=,94201169,47071704,47069508&g_ep=CAISDDYuOTAuMi4yMTg5MBgAIJ6dCiobLDk0MjAxMTY5LDQ3MDcxNzA0LDQ3MDY5NTA4QgJFRw%3D%3D&g_st=iwb", "lat": 30.048625, "lng": 30.978719}, {"zone": "Zone 1", "nb": "6th Of October", "name": "Al-Hossary", "worker": "Ahmed Mansour", "phone": "01141820593", "comm": 100, "fam": "No", "map": "https://www.google.com/maps/place/%D9%85%D9%83%D8%AA%D8%A8+%D8%B5%D8%AD%D9%87+%D8%A7%D9%84%D8%A7%D8%B3%D8%B1%D8%A9+%D9%88%D9%85%D8%B3%D8%AA%D9%88%D8%B5%D9%81+%D8%A7%D9%84%D8%AD%D8%B5%D8%B1%D9%8A%E2%80%AD/@29.973004,30.9392558,17z/data=!3m1!4b1!4m6!3m5!1s0x14585787fb135197:0xf181e6dbcf21f6bb!8m2!3d29.9729994!4d30.9438692!16s%2Fg%2F11j6xxrmxq?entry=tts&shorturl=1", "lat": 29.972999, "lng": 30.943869}, {"zone": "Zone 1", "nb": "6th Of October", "name": "6th District 2nd", "worker": "Ahmed Mansour", "phone": "01141820593", "comm": 100, "fam": "No", "map": "https://www.google.com/maps/place/6+October+Office+Health+Library-Health+Office/@29.9342829,30.9149074,17z/data=!3m1!4b1!4m5!3m4!1s0x145855e98a41e7a1:0xeb0a747f51dddd7d!8m2!3d29.9342783!4d30.9170961?shorturl=1", "lat": 29.934278, "lng": 30.917096}, {"zone": "Zone 1", "nb": "6th Of October", "name": "Kafr Nassar", "worker": "Ahmed Hasanen", "phone": "01012391317", "comm": 100, "fam": "", "map": "https://www.google.com/maps/place/X4RM%2BP38+Health+Office+Kafr+Nassar,+Kafr+Nassar,+Al+Haram,+Giza+Governorate+3550201/data=!4m2!3m1!1s0x145845aa244f8013:0x33b7ae216b781698?utm_source=mstt_1&entry=gps&coh=192189&g_ep=CAESCjExLjEyNi4xMDMYACDXggMqSCw5NDIxMjQ5Niw5NDIwNzUwNiw5NDIwODUwNiw5NDIxNzUyMyw5NDIxODY1Myw0NzA4NzExOCw0NzA4NDM5Myw5NDIxMzIwMEICRUc%3D", "lat": 29.934291, "lng": 30.917595}, {"zone": "Zone 1", "nb": "6th Of October", "name": "Kafr Ghataty", "worker": "Hanan", "phone": "01119957850", "comm": null, "fam": "", "map": "https://www.google.com/maps/place/X4XF%2BVHX+Kafr+Ghatati+Primary+Health+Care,+Kafr+Nassar,+Al+Haram,+Giza+Governorate+3552010/data=!4m2!3m1!1s0x1458457537b79131:0xc90b9b91de1585c1?utm_source=mstt_1&entry=gps&coh=192189&g_ep=CAESCjExLjEyNi4xMDMYACDXggMqSCw5NDIxMjQ5Niw5NDIwNzUwNiw5NDIwODUwNiw5NDIxNzUyMyw5NDIxODY1Myw0NzA4NzExOCw0NzA4NDM5Myw5NDIxMzIwMEICRUc%3D", "lat": 29.934291, "lng": 30.917595}, {"zone": "Zone 1", "nb": "Al Maadi", "name": "West Basaten", "worker": "M. Shalaby", "phone": "01128362663", "comm": 100, "fam": "No", "map": "https://www.google.com/maps/place/Health+Bureau+-+West+El+Basateen,+60+%D8%B4+%D8%A7%D9%84%D8%A8%D8%B3%D8%A7%D8%AA%D9%8A%D9%86%D8%8C+Al+Basatin+Al+Gharbeyah,+El+Basatin,+Cairo+Governorate+4232054%E2%80%AD/data=!4m2!3m1!1s0x14583880d3eaef89:0x3287e4b00a8b307?utm_source=mstt_1&entry=gps&g_ep=CAESCTExLjUxLjcwNBgAIP___________wEqAEICRUc%3D", "lat": 29.967551, "lng": 31.258423}, {"zone": "Zone 1", "nb": "Al Maadi", "name": "East Basaten", "worker": "A. Amin", "phone": "01550792401", "comm": null, "fam": "", "map": "https://www.google.com/maps/place/Health+Bureau+-+West+El+Basateen,+60+%D8%B4+%D8%A7%D9%84%D8%A8%D8%B3%D8%A7%D8%AA%D9%8A%D9%86%D8%8C+Al+Basatin+Al+Gharbeyah,+El+Basatin,+Cairo+Governorate+4232054%E2%80%AD/data=!4m2!3m1!1s0x14583880d3eaef89:0x3287e4b00a8b307?utm_source=mstt_1&entry=gps&coh=192189&g_ep=CAESCjExLjEyNi4xMDMYACCIJypILDk0MjEyNDk2LDk0MjA3NTA2LDk0MjA4NTA2LDk0MjE3NTIzLDk0MjE4NjUzLDQ3MDg3MTE4LDQ3MDg0MzkzLDk0MjEzMjAwQgJFRw%3D%3D", "lat": 29.967551, "lng": 31.258423}, {"zone": "Zone 1", "nb": "Al Maadi", "name": "El Khabeery", "worker": "Habib erian", "phone": "01275505151", "comm": 100, "fam": "No", "map": "https://www.google.com/maps/place/Health+Bureau+-+Maadi+El+Khabeery/@29.9675189,31.2584192,15z/data=!4m5!3m4!1s0x0:0xff0c5d324e95b4bc!8m2!3d29.9652987!4d31.2534294?shorturl=1", "lat": 29.965299, "lng": 31.253429}, {"zone": "Zone 1", "nb": "Al Maadi", "name": "Maadi HO", "worker": "Mohamed", "phone": "01115219493", "comm": 100, "fam": "", "map": "https://www.google.com/maps/place/%D9%85%D9%83%D8%AA%D8%A8+%D8%B5%D8%AD%D8%A9+%D8%A7%D9%84%D9%85%D8%B9%D8%A7%D8%AF%D9%89%D8%8C+1+%D9%85%D9%8A%D8%AF%D8%A7%D9%86+%D8%A7%D9%84%D8%AA%D8%B9%D8%A7%D9%88%D9%86%D8%8C+%D8%B9%D8%B2%D8%A8%D8%A9+%D9%86%D8%A7%D9%81%D8%B9%D8%8C+%D9%82%D8%B3%D9%85+%D8%A7%D9%84%D9%85%D8%B9%D8%A7%D8%AF%D9%8A%D8%8C+%D9%85%D8%AD%D8%A7%D9%81%D8%B8%D8%A9+%D8%A7%D9%84%D9%82%D8%A7%D9%87%D8%B1%D8%A9%E2%80%AC+4212160%E2%80%AD/data=!4m2!3m1!1s0x1458478b0ae8888f:0x7e3c51931473bc67?utm_source=mstt_1&entry=gps&g_ep=CAESCTExLjc5LjMwMRgAINeCAyoAQgJFRw%3D%3D", "lat": 29.967551, "lng": 31.258423}, {"zone": "Zone 1", "nb": "Al Maadi", "name": "Saqr Qurish", "worker": "A. Abdallah", "phone": "01124393959", "comm": 100, "fam": "No", "map": "https://www.google.com/maps/place/X7PP%2BF92+%D8%A7%D9%84%D9%85%D8%B1%D9%83%D8%B2+%D8%A7%D9%84%D8%B5%D8%AD%D9%89+%D8%A7%D9%84%D8%AD%D8%B6%D8%B1%D9%89,+El-Basatin+Sharkeya,+El+Basatin,+Cairo+Governorate+4234611%E2%80%AD/data=!4m6!3m5!1s0x145839aa0ba523b9:0x4f72d9f942cba072!7e2!8m2!3d29.986125899999998!4d31.285892699999998?utm_source=mstt_1&entry=gps&coh=192189&g_ep=CAESCjExLjEyNi4xMDMYACCIJypILDk0MjEyNDk2LDk0MjA3NTA2LDk0MjA4NTA2LDk0MjE3NTIzLDk0MjE4NjUzLDQ3MDg3MTE4LDQ3MDg0MzkzLDk0MjEzMjAwQgJFRw%3D%3D", "lat": 29.986126, "lng": 31.285893}, {"zone": "Zone 1", "nb": "El Sayyeda Aisha", "name": "El Khalefa HO 1", "worker": "Ashraf", "phone": "01158198170", "comm": 150, "fam": "No", "map": "https://www.google.com/maps/place/Health+Bureau+-+El+Khalifa+1/@30.027216,31.2534993,17z/data=!3m1!4b1!4m5!3m4!1s0x145840ab6477ce7f:0x87651bca581e9f56!8m2!3d30.027216!4d31.255688?shorturl=1", "lat": 30.027216, "lng": 31.255688}, {"zone": "Zone 2", "nb": "Dokki", "name": "Dokki HO", "worker": "Mohamed El Sayed", "phone": "01010069533", "comm": 200, "fam": "No", "map": "https://www.google.com/maps/place/Health+Bureau+-+Dokki/@30.0397328,31.2112284,17z/data=!3m1!4b1!4m5!3m4!1s0x1458412b301f8ad7:0x234902b32343e9f5!8m2!3d30.0397328!4d31.2134171?shorturl=1", "lat": 30.039733, "lng": 31.213417}, {"zone": "Zone 2", "nb": "Agouza", "name": "Agouza HO", "worker": "Ahmed Momtaz", "phone": "01111392949", "comm": 200, "fam": "No", "map": "https://www.google.com/maps/place/%D9%85%D9%83%D8%AA%D8%A8+%D8%A7%D9%84%D8%B5%D8%AD%D8%A9+%D8%A7%D9%84%D8%B9%D8%AC%D9%88%D8%B2%D8%A9+Agouza+health+office%E2%80%AD/@30.0600995,31.1965939,14z/data=!4m5!3m4!1s0x1458411f818e6733:0xcb54fd537fe1c07f!8m2!3d30.0600995!4d31.2141034?shorturl=1", "lat": 30.060099, "lng": 31.214103}, {"zone": "Zone 2", "nb": "Qasr El Neel", "name": "Qasr El Neel HO", "worker": "Hamdy", "phone": "01094991211", "comm": 250, "fam": "No", "map": "https://www.google.com/maps/place/%D9%85%D9%83%D8%AA%D8%A8+%D8%B5%D8%AD%D8%A9+-+%D9%82%D8%B5%D8%B1+%D8%A7%D9%84%D9%86%D9%8A%D9%84%E2%80%AD/@30.0343673,31.2357931,17z/data=!3m1!4b1!4m5!3m4!1s0x145840caeeb28409:0xf79741f206f06870!8m2!3d30.0343673!4d31.2379818?shorturl=1", "lat": 30.034367, "lng": 31.237982}, {"zone": "Zone 2", "nb": "El Sayeda Zayneb", "name": "El Sayda Zeinab 3", "worker": "Karim", "phone": "01156163743", "comm": 100, "fam": "", "map": "https://www.google.com/maps/place/Health+Bureau+-+El+Sayeda+Zeinab+3/@30.0343855,31.2353798,17z/data=!3m1!4b1!4m6!3m5!1s0x145840caeeb28409:0x7ff471d022723002!8m2!3d30.0343855!4d31.2379547!16s%2Fg%2F12mkw0bq2?entry=tts&g_ep=EgoyMDI1MDExMC4wIPu8ASoASAFQAw%3D%3D", "lat": 30.034385, "lng": 31.237955}, {"zone": "Zone 2", "nb": "Manial", "name": "Manial HO", "worker": "Ayman", "phone": "01124145294", "comm": 0, "fam": "No", "map": "https://maps.google.com/maps?cid=17285853972860434663&entry=gps", "lat": 30.022183, "lng": 31.22713}, {"zone": "Zone 2", "nb": "Meet Okba", "name": "Meet Okba HO", "worker": "Amr", "phone": "01120109500", "comm": 150, "fam": "No", "map": "https://www.google.com/maps/place/%D9%85%D9%83%D8%AA%D8%A8+%D8%B5%D8%AD%D8%A9+%D9%85%D9%8A%D8%AA+%D8%B9%D9%82%D8%A8%D8%A9+Health+Office+Meet+Okba%E2%80%AD/@30.0689932,31.195152,15z/data=!4m6!3m5!1s0x14584114bdd2f321:0x5862d74cf9bcbf76!8m2!3d30.0689932!4d31.195152!16s%2Fg%2F11g68_qctd?coh=164777&entry=tt&shorturl=1", "lat": 30.068993, "lng": 31.195152}, {"zone": "Zone 2", "nb": "Mohandesin", "name": "Mohandesin HO", "worker": "shadad", "phone": "01012026460", "comm": 200, "fam": "No", "map": "https://www.google.com/maps/place/Health+Bearu+Mohandesin/@30.0544757,31.1978168,15z/data=!4m6!3m5!1s0x14584139c495f26f:0x38e4828502c25553!8m2!3d30.0544757!4d31.1978168!16s%2Fg%2F11dzz61y6f?coh=164777&entry=tt&shorturl=1", "lat": 30.054476, "lng": 31.197817}, {"zone": "Zone 2", "nb": "Ard Al Lewa", "name": "Ard Al Lewa HO", "worker": "Nabil", "phone": "01118400090", "comm": 200, "fam": "No", "map": "https://www.google.com/maps/place/%D9%85%D9%83%D8%AA%D8%A8+%D8%A7%D9%84%D8%B5%D8%AD%D8%A9+%D8%A8%D8%A3%D8%B1%D8%B6+%D8%A7%D9%84%D9%84%D9%88%D8%A7%D8%A1%E2%80%AD/@30.057611,31.188138,15z/data=!4m6!3m5!1s0x1458415b45c9cb67:0xd3958a7c2033d1ad!8m2!3d30.057611!4d31.188138!16s%2Fg%2F11s5qpnhk3?coh=164777&entry=tt&shorturl=1", "lat": 30.057611, "lng": 31.188138}, {"zone": "Zone 2", "nb": "Giza", "name": "Giza 1", "worker": "Sherif", "phone": "01004829020", "comm": null, "fam": "", "map": "https://www.google.com/maps/place/%D9%85%D9%83%D8%AA%D8%A8+%D8%B5%D8%AD%D8%A9+-+%D8%A7%D9%84%D8%AC%D9%8A%D8%B2%D8%A9+1%E2%80%AD/@30.0164367,31.2126823,17z/data=!3m1!4b1!4m6!3m5!1s0x145846e37aab7675:0x632051d635653180!8m2!3d30.0164367!4d31.2152572!16s%2Fg%2F1hc1f2dg1?entry=tts&g_ep=EgoyMDI1MDExMC4wIPu8ASoASAFQAw%3D%3D", "lat": 30.016437, "lng": 31.215257}, {"zone": "Zone 2", "nb": "Giza", "name": "Giza 4", "worker": "Aly elkatep", "phone": "01221209750", "comm": 100, "fam": "", "map": "https://www.google.com/maps/place/X6X6%2BRJ4+%D9%85%D9%83%D8%AA%D8%A8+%D8%B5%D8%AD%D8%A9+%D8%AC%D9%8A%D8%B2%D8%A9+%D8%B1%D8%A7%D8%A8%D8%B9,+%D8%A3%D9%8A%D9%85%D9%86%D8%8C+%D8%B3%D8%A7%D9%82%D9%8A%D8%A9+%D9%85%D9%83%D9%8A%D8%8C+%D9%82%D8%B3%D9%85+%D8%A7%D9%84%D8%AC%D9%8A%D8%B2%D8%A9%D8%8C+%D9%85%D8%AD%D8%A7%D9%81%D8%B8%D8%A9+%D8%A7%D9%84%D8%AC%D9%8A%D8%B2%D8%A9+3723518%E2%80%AD/data=!4m2!3m1!1s0x145847838319ff3b:0xee4d82be2f0633e4?utm_source=mstt_1&entry=gps&g_ep=CAESCTExLjc5LjMwMRgAIIgnKgBCAkVH", "lat": 30.01002, "lng": 31.202088}, {"zone": "Zone 2", "nb": "Kafr Tohurmos", "name": "Kafr Tohurmos", "worker": "Refaat", "phone": "01111066288", "comm": null, "fam": "", "map": "https://www.google.com/maps/place/%D9%85%D8%B1%D9%83%D8%B2+%D8%B7%D8%A8+%D8%A7%D8%B3%D8%B1%D9%87+%D9%83%D9%81%D8%B1+%D8%B7%D9%87%D8%B1%D9%85%D8%B3%E2%80%AD/@30.0164589,31.1746617,17z/data=!4m6!3m5!1s0x1458468310a34a07:0x9f3cfbafd0415048!8m2!3d30.0164589!4d31.1746617!16s%2Fg%2F11dxkc4jp6?entry=tts&g_ep=EgoyMDI1MDExMC4wIPu8ASoASAFQAw%3D%3D", "lat": 30.016459, "lng": 31.174662}, {"zone": "Zone 2", "nb": "Monib", "name": "Al Monib HO", "worker": "Emad", "phone": "010116800514", "comm": 100, "fam": "", "map": "https://www.google.com/maps/place/%D8%B9%D9%8A%D8%A7%D8%AF%D9%87+%D8%A7%D9%84%D8%AF%D9%83%D8%AA%D9%88%D8%B1%D9%87+%D9%87%D9%86%D8%A7%D8%A1+%D8%B3%D9%8A%D8%AF+%D8%A7%D8%B3%D8%AA%D8%B4%D8%A7%D8%B1%D9%8A+%D8%A7%D9%85%D8%B1%D8%A7%D8%B6+%D8%B5%D8%AF%D8%B1%D9%8A%D9%87+%D9%88%D8%A8%D8%A7%D8%B7%D9%86%D9%87%D8%8C+%D8%A7%D9%84%D9%85%D8%AF%D8%B1%D8%B3%D8%A9%D8%8C+%D8%AA%D8%B1%D8%B3%D8%A7%D8%8C+%D9%82%D8%B3%D9%85+%D8%A7%D9%84%D8%AC%D9%8A%D8%B2%D8%A9%D8%8C+%D9%85%D8%AD%D8%A7%D9%81%D8%B8%D8%A9+%D8%A7%D9%84%D8%AC%D9%8A%D8%B2%D8%A9+3720640%E2%80%AD/data=!4m6!3m5!1s0x1458471f7d8c53a5:0xacec15af009d0c1f!7e2!8m2!3d29.9799077!4d31.209846499999998?utm_source=mstt_1&entry=gps&g_ep=CAESCTExLjc5LjMwMRgAINeCAyoAQgJFRw%3D%3D", "lat": 29.979908, "lng": 31.209846}, {"zone": "Zone 2", "nb": "Omranya", "name": "Omranya HO", "worker": "", "phone": "", "comm": null, "fam": "", "map": "https://www.google.com/maps/place/X6V3%2BC9V+%D9%85%D8%B1%D9%83%D8%B2+%D8%A7%D9%84%D8%B1%D8%B9%D8%A7%D9%8A%D8%A9+%D8%A7%D9%84%D8%B5%D8%AD%D9%8A%D8%A9+%D8%A7%D9%84%D8%A3%D9%88%D9%84%D9%8A%D8%A9+%D8%A8%D8%A7%D9%84%D8%B9%D9%85%D8%B1%D8%A7%D9%86%D9%8A%D8%A9%D8%8C+%D8%A7%D9%84%D9%82%D8%B5%D8%A8%D8%AC%D9%8A%D8%8C+%D8%A7%D9%84%D8%B9%D9%85%D8%B1%D8%A7%D9%86%D9%8A%D8%A9+%D8%A7%D9%84%D8%BA%D8%B1%D8%A8%D9%8A%D8%A9%D8%8C+%D9%82%D8%B3%D9%85+%D8%A7%D9%84%D8%B9%D9%85%D8%B1%D8%A7%D9%86%D9%8A%D8%A9%D8%8C+%D9%85%D8%AD%D8%A7%D9%81%D8%B8%D8%A9+%D8%A7%D9%84%D8%AC%D9%8A%D8%B2%D8%A9+3543377%E2%80%AD/data=!4m2!3m1!1s0x1458465a46335d2b:0xb0a4461d9467de2a?utm_source=mstt_1&entry=gps&g_ep=CAESCTExLjc5LjMwMRgAINeCAyoAQgJFRw%3D%3D", "lat": 30.005202, "lng": 31.189406}, {"zone": "Zone 2", "nb": "Haram", "name": "Haram HO", "worker": "Dr Ahmed", "phone": "", "comm": null, "fam": "No", "map": "https://www.google.com/maps/place/%D8%A7%D9%84%D8%A7%D8%AF%D8%A7%D8%B1%D8%A9+%D8%A7%D9%84%D8%B5%D8%AD%D9%8A%D8%A9+%D8%A8%D8%A7%D9%84%D8%B9%D9%85%D8%B1%D8%A7%D9%86%D9%8A%D8%A9+-+%D9%85%D9%83%D8%AA%D8%A8+%D8%A7%D9%84%D8%B5%D8%AD%D8%A9%E2%80%AD/@30.0052017,31.189406,17z/data=!3m1!4b1!4m6!3m5!1s0x1458468a167e5913:0x1f6c8e2109e2b6c5!8m2!3d30.0052017!4d31.189406!16s%2Fg%2F11c1szd014?hl=en-EG&shorturl=1", "lat": 30.005202, "lng": 31.189406}, {"zone": "Zone 2", "nb": "Abo Atada", "name": "Abo Atada HO", "worker": "Ahmed ali", "phone": "01150260421", "comm": null, "fam": "", "map": "https://www.google.com/maps/place/26C2%2BPRQ+%D9%85%D9%83%D8%AA%D8%A8+%D8%B5%D8%AD%D8%A9+%D8%A7%D8%A8%D9%88+%D9%82%D8%AA%D8%A7%D8%AF%D9%87+(+%D8%AC%D8%A7%D9%85%D8%B9+%D8%A7%D8%A8%D9%88+%D9%82%D8%AA%D8%A7%D8%AF%D9%87+%D8%A7%D9%84%D8%B6%D8%B1%D9%8A%D8%AD+),+Ahmed+Zewail,+Boulaq+Ad+Dakrour,+Boulaq+Al+Dakrour,+Giza+Governorate+3716161%E2%80%AD/data=!4m2!3m1!1s0x1458477b815e760f:0xf46353210a207a15?utm_source=mstt_1&entry=gps&g_ep=CAESCTExLjc5LjMwMRgAINeCAyoAQgJFRw%3D%3D", "lat": 29.999991, "lng": 31.176124}, {"zone": "Zone 2", "nb": "Talbia", "name": "Talbia HO", "worker": "Mohamed Adel", "phone": "01112624015", "comm": null, "fam": "Yes", "map": "https://maps.google.com/?q=%D9%85%D8%B1%D9%83%D8%B2+%D8%A7%D9%84%D8%B1%D8%B9%D8%A7%D9%8A%D8%A9+%D8%A7%D9%84%D8%B5%D8%AD%D9%8A%D8%A9+%D8%A7%D9%84%D8%A3%D9%88%D9%84%D9%8A%D8%A9+%D8%A8%D8%A7%D9%84%D8%B7%D8%A7%D9%84%D8%A8%D9%8A%D8%A9,+Al+Haram,+Al+Omraneyah+Al+Gharbeyah,+El+Omraniya,+Giza+Governorate+3546220&ftid=0x1458468a14b52f9d:0xb1b4a1837495c4df", "lat": 30.005232, "lng": 31.189402}, {"zone": "Zone 3", "nb": "Azbakya", "name": "El Azbakya HO", "worker": "Garges Sobhy", "phone": "01221441429", "comm": 150, "fam": "No", "map": "https://www.google.com/maps/place//data=!4m2!3m1!1s0x145840917027da05:0x6a91371ceb228067?utm_source=mstt_1", "lat": 30.058436, "lng": 31.246434}, {"zone": "Zone 3", "nb": "Nasr City", "name": "Nasr City HO 1", "worker": "Badr", "phone": "01274466535", "comm": 100, "fam": "No", "map": "https://maps.google.com/maps?cid=15537173968629668210&entry=gps", "lat": 30.067928, "lng": 31.323518}, {"zone": "Zone 3", "nb": "Nasr City", "name": "مركز طبي مدينة الامل (Hagana HO)", "worker": "Sayed", "phone": "01008034300", "comm": 100, "fam": "", "map": "https://www.google.com/maps/place/396J%2BVF6+Al+Haganah+Health+Bureau,+Al+Markaz+Al+Tebi,+Madinat+Al-Amal,+Nasr+City,+Cairo+Governorate+4454006/data=!4m2!3m1!1s0x14583d94702ab635:0xc4bff76211a58762?utm_source=mstt_1&entry=gps&g_ep=CAESCTExLjc5LjMwMRgAIIgnKgBCAkVH", "lat": 30.067928, "lng": 31.323518}, {"zone": "Zone 3", "nb": "Nasr City", "name": "Nasr city HO 2", "worker": "Talaat", "phone": "01151190109", "comm": 150, "fam": "No", "map": "https://www.google.com/maps/place/6th+District+Medical+Centre,+Al+Hay+as+Sades,+Nasr+City,+Cairo+Governorate+4432032/data=!4m2!3m1!1s0x14583ef9ea0a17c7:0xabe7101f19574148?utm_source=mstt_1&entry=gps&g_ep=CAESCTExLjYwLjcwMxgAIIgnKgBCAkVH", "lat": 30.067928, "lng": 31.323518}, {"zone": "Zone 3", "nb": "Nasr City", "name": "Naser city HO7 مركز طبي الحي السابع", "worker": "Nagy", "phone": "01222821723", "comm": 150, "fam": "No", "map": "https://maps.google.com/maps?q=30.053265,31.335167", "lat": 30.067928, "lng": 31.323518}, {"zone": "Zone 3", "nb": "Sheraton", "name": "Sheraton HO / Alhaikstep", "worker": "Sherif", "phone": "01115010205", "comm": 200, "fam": "No", "map": "https://maps.google.com/?q=30.1410960,31.4240680&entry=gps&lucs=,94275415,94284505,94224825,94227247,94227248,94231188,94280568,47071704,47069508,94218641,94282134,94203019,47084304,94286869&g_ep=CAISEjI1LjQ3LjAuODMzNTQyOTMwMBgAINeCAyp-LDk0Mjc1NDE1LDk0Mjg0NTA1LDk0MjI0ODI1LDk0MjI3MjQ3LDk0MjI3MjQ4LDk0MjMxMTg4LDk0MjgwNTY4LDQ3MDcxNzA0LDQ3MDY5NTA4LDk0MjE4NjQxLDk0MjgyMTM0LDk0MjAzMDE5LDQ3MDg0MzA0LDk0Mjg2ODY5QgJFRw%3D%3D&skid=07711e11-acc5-4ef3-8092-6fb868a2bddf&g_st=ipc", "lat": 30.096385, "lng": 31.382783}, {"zone": "Zone 3", "nb": "Helioplis", "name": "Beruit HO", "worker": "Safwat", "phone": "01001902672", "comm": 200, "fam": "No", "map": "https://www.google.com/maps/place//data=!4m2!3m1!1s0x1458158a29656fa3:0x2b65e5950198acb3?utm_source=mstt_1", "lat": 30.095114, "lng": 31.325945}, {"zone": "Zone 3", "nb": "Masr El Gdeda", "name": "Almaza HO", "worker": "Ahmed Hasan", "phone": "01279869324", "comm": 200, "fam": "No", "map": "https://www.google.com/maps/place/Health+Bureau+-+Almaza/@30.0826059,31.3501652,17z/data=!3m1!4b1!4m5!3m4!1s0x14583e00f18b31e9:0x88f8d60ffead3740!8m2!3d30.0826059!4d31.3523539?shorturl=1", "lat": 30.082606, "lng": 31.352354}, {"zone": "Zone 3", "nb": "El Nozha El Gededa", "name": "El Nozha El Gededa", "worker": "Karmy", "phone": "01207422577", "comm": 200, "fam": "No", "map": "https://www.google.com/maps/place/Health+Bureau+-+El+Nozha+El+Gadida,+%D8%B4+Joseph+Tito+St,+%D8%A7%D9%84%D9%86%D8%B2%D9%87%D8%A9+%D8%A7%D9%84%D8%AC%D8%AF%D9%8A%D8%AF%D8%A9%D8%8C+El+Nozha,+Cairo+Governorate+4473171%E2%80%AD/data=!4m2!3m1!1s0x14581661e346f567:0xa078ab015f7a7717?utm_source=mstt_1&entry=gps&g_ep=CAESCTExLjUxLjcwNBgAIP___________wEqAA%3D%3D", "lat": 30.121757, "lng": 31.372062}, {"zone": "Zone 3", "nb": "El Zayton", "name": "El Zayton 1", "worker": "Mrs Wesam Fouad", "phone": "01143184040", "comm": 100, "fam": "No", "map": "https://www.google.com/maps/place/%D9%85%D9%83%D8%AA%D8%A8+%D8%B5%D8%AD%D8%A9+%D8%A7%D9%84%D8%B2%D9%8A%D8%AA%D9%88%D9%86+1%D8%8C+39+Nasouh,+El-Zaytoun+Sharkeya,+Zeitoun,+Cairo+Governorate+4521151%E2%80%AD/data=!4m2!3m1!1s0x145815831616c6bd:0x59e3a5f681cebf03?utm_source=mstt_1&entry=gps&coh=192189&g_ep=CAESCjExLjEyNi4xMDMYACDXggMqSCw5NDIxMjQ5Niw5NDIwNzUwNiw5NDIwODUwNiw5NDIxNzUyMyw5NDIxODY1Myw0NzA4NzExOCw0NzA4NDM5Myw5NDIxMzIwMEICRUc%3D", "lat": 30.105295, "lng": 31.312247}, {"zone": "Zone 3", "nb": "The 5th settlement", "name": "5th settlement HO", "worker": "Dr. Toka", "phone": "01014467200", "comm": 250, "fam": "No", "map": "https://www.google.com/maps/place/%D9%85%D9%83%D8%AA%D8%A8+%D8%B5%D8%AD%D8%A9+%D8%A7%D9%84%D8%AA%D8%AC%D9%85%D8%B9+%D8%A7%D9%84%D8%AE%D8%A7%D9%85%D8%B3%D8%8C+200+%D8%A8%D9%84%D9%88%D9%83+36%D8%8C+%D9%82%D8%B3%D9%85+%D8%A3%D9%88%D9%84+%D8%A7%D9%84%D9%82%D8%A7%D9%87%D8%B1%D8%A9+%D8%A7%D9%84%D8%AC%D8%AF%D9%8A%D8%AF%D8%A9%D8%8C+%D9%85%D8%AD%D8%A7%D9%81%D8%B8%D8%A9+%D8%A7%D9%84%D9%82%D8%A7%D9%87%D8%B1%D8%A9%E2%80%AC+4722626%E2%80%AD/data=!4m2!3m1!1s0x14583d57e42ba729:0xf864b308966edc56?utm_source=mstt_1&entry=gps&lucs=47062702&g_ep=CAESCTExLjY5LjQwMRgAIIgnKgg0NzA2MjcwMkICRUc%3D", "lat": 30.054887, "lng": 31.449199}, {"zone": "Zone 3", "nb": "3rd settlement", "name": "3rd settlement HO", "worker": "A. AbdelRahman", "phone": "01094294347", "comm": null, "fam": "", "map": "https://www.google.com/maps/place/%D9%85%D8%B1%D9%83%D8%B2+%D8%A7%D9%84%D8%AA%D8%AC%D9%85%D8%B9+%D8%A7%D9%84%D8%AB%D8%A7%D9%84%D8%AB+%D8%A7%D9%84%D8%B7%D8%A8%D9%8A%D8%8C+88+%D8%A7%D9%84%D9%85%D8%B3%D8%AA%D9%82%D8%A8%D9%84%D8%8C+%D9%85%D8%AF%D9%8A%D9%86%D8%A9+%D9%86%D8%B5%D8%B1%D8%8C+%D9%85%D8%AD%D8%A7%D9%81%D8%B8%D8%A9+%D8%A7%D9%84%D9%82%D8%A7%D9%87%D8%B1%D8%A9%E2%80%AC+4713413%E2%80%AD/data=!4m2!3m1!1s0x14583b5ff783d8f5:0xb493c9108a17ac62?utm_source=mstt_1&entry=gps&g_ep=CAESCTExLjc5LjMwMRgAINeCAyoAQgJFRw%3D%3D", "lat": 30.054887, "lng": 31.449199}, {"zone": "Zone 3", "nb": "1st settlement", "name": "1st settlement HO", "worker": "Dr Mohamed Nasr", "phone": "01021236361", "comm": null, "fam": "", "map": "https://www.google.com/maps/place/3C3X%2BXM4+Health+Bureau+-+First+Settlement,+New+Cairo+1,+Cairo+Governorate+4734022/data=!4m2!3m1!1s0x145822ac77e7910d:0x2ef4e1b4c00c5a1a?utm_source=mstt_1&entry=gps&coh=192189&g_ep=CAESCjExLjEyNi4xMDMYACDXggMqSCw5NDIxMjQ5Niw5NDIwNzUwNiw5NDIwODUwNiw5NDIxNzUyMyw5NDIxODY1Myw0NzA4NzExOCw0NzA4NDM5Myw5NDIxMzIwMEICRUc%3D", "lat": 30.054887, "lng": 31.449199}, {"zone": "Zone 3", "nb": "Mokkatam", "name": "Mokkatam HO", "worker": "Saber", "phone": "01090679745", "comm": 100, "fam": "", "map": "https://www.google.com/maps/place/287J%2BJHH+Mokattam+Health+Office+Vaccination,+Al+Abageyah,+El+Khalifa,+Cairo+Governorate+4414620/data=!4m2!3m1!1s0x14583eb61ce0cde5:0x251c6b26f8f23839?utm_source=mstt_1&entry=gps&g_ep=CAESCTExLjc5LjMwMRgAINeCAyoAQgJFRw%3D%3D", "lat": 30.014296, "lng": 31.331533}, {"zone": "Zone 3", "nb": "Obour", "name": "Al Hay El Tarfehy", "worker": "Dr Abeer", "phone": "01016288491", "comm": null, "fam": "", "map": "https://www.google.com/maps/place/%D9%85%D9%83%D8%AA%D8%A8+%D8%B5%D8%AD%D8%A9+%D8%A7%D9%84%D8%AD%D9%8A+%D8%A7%D9%84%D8%AA%D8%B1%D9%81%D9%8A%D9%87%D9%8A%D8%8C+%D9%85%D9%83%D8%AA%D8%A8+%D8%B5%D8%AD%D8%A9,+Al+Obour,+Al-Qalyubia+Governorate+6360230%E2%80%AD/data=!4m2!3m1!1s0x145805889b1325ad:0x37cd9ad4cf1d693d?utm_source=mstt_1&entry=gps&coh=192189&g_ep=CAESCjExLjEyNi4xMDMYACDXggMqSCw5NDIxMjQ5Niw5NDIwNzUwNiw5NDIwODUwNiw5NDIxNzUyMyw5NDIxODY1Myw0NzA4NzExOCw0NzA4NDM5Myw5NDIxMzIwMEICRUc%3D", "lat": 30.251751, "lng": 31.473116}, {"zone": "Zone 3", "nb": "Obour", "name": "Al Hay El Tany", "worker": "Dr Toka", "phone": "01013751997", "comm": null, "fam": "", "map": "https://www.google.com/maps/place/7F2F%2BP65+%D9%85%D8%B1%D9%83%D8%B2+%D8%B7%D8%A8%D9%8A+%D8%A7%D9%84%D8%AD%D9%8A+%D8%A7%D9%84%D8%AB%D8%A7%D9%86%D9%8A+%D8%A8%D8%A7%D9%84%D8%B9%D8%A8%D9%88%D8%B1,+Unnamed+Road,+Al+Obour,+%D9%85%D8%AD%D8%A7%D9%81%D8%B8%D8%A9+%D8%A7%D9%84%D9%82%D8%A7%D9%87%D8%B1%D8%A9%E2%80%AC%E2%80%AD/data=!4m2!3m1!1s0x1458052cd13006f1:0xf82ca667038bbd95?utm_source=mstt_1&entry=gps&coh=192189&g_ep=CAESCjExLjEyNi4xMDMYACCs3wEqSCw5NDIxMjQ5Niw5NDIwNzUwNiw5NDIwODUwNiw5NDIxNzUyMyw5NDIxODY1Myw0NzA4NzExOCw0NzA4NDM5Myw5NDIxMzIwMEICRUc%3D", "lat": 30.251751, "lng": 31.473116}, {"zone": "Zone 3", "nb": "El Darb El Ahmar", "name": "El Darb El Ahmar HO", "worker": "Mohamed Hassan", "phone": "01151600031", "comm": 100, "fam": "No", "map": "https://www.google.com/maps/place/%D9%85%D9%83%D8%AA%D8%A8+%D8%B5%D8%AD%D8%A9+-+%D8%A7%D9%84%D8%AF%D8%B1%D8%A8+%D8%A7%D9%84%D8%A7%D8%AD%D9%85%D8%B1%E2%80%AD/@30.0398744,31.2516711,17z/data=!4m5!3m4!1s0x145840a576949d3f:0x91177f995b6cd77e!8m2!3d30.0398744!4d31.2538598?shorturl=1", "lat": 30.039874, "lng": 31.25386}, {"zone": "Zone 3", "nb": "Shobra", "name": "Shobra HO", "worker": "Ghada", "phone": "01018371631", "comm": 100, "fam": "No", "map": "https://www.google.com/maps/place/%D9%85%D8%B1%D9%83%D8%B2+%D8%B5%D8%AD%D8%A9+%D8%A7%D9%84%D8%A3%D8%B3%D8%B1%D8%A9+%D8%A8%D8%B4%D8%A8%D8%B1%D8%A7+%D8%A7%D9%84%D8%A8%D9%84%D8%AF%D8%8C+26+%D8%A7%D9%84%D8%A3%D9%85%D9%8A%D8%B1%D8%A9+%D9%81%D9%88%D8%B2%D9%8A%D8%A9%D8%8C+%D8%B4%D8%A8%D8%B1%D8%A7+%D8%A7%D9%84%D8%AE%D9%8A%D9%85%D8%A9%D8%8C+%D9%82%D8%B3%D9%85+%D8%A3%D9%88%D9%84+%D8%B4%D8%A8%D8%B1%D8%A7+%D8%A7%D9%84%D8%AE%D9%8A%D9%85%D8%A9%D8%8C+%D8%A7%D9%84%D9%82%D9%84%D9%8A%D9%88%D8%A8%D9%8A%D8%A9%D8%8C%E2%80%AD/data=!4m2!3m1!1s0x14584191db722621:0x8895cb93ed764da9?utm_source=mstt_1&entry=gps&g_ep=CAESCTExLjc5LjMwMRgAIIgnKgBCAkVH", "lat": 30.067488, "lng": 31.251966}, {"zone": "Zone 3", "nb": "El Zawya El Hamra", "name": "El Zawya El Hamra HO 2", "worker": "Mohamed Saad", "phone": "01009246611", "comm": 100, "fam": "No", "map": "https://www.google.com/maps/place/Health+Bureau+-+El+Zawya+El+Qadima/@30.0926234,31.2686819,17z/data=!3m1!4b1!4m6!3m5!1s0x14583ff198cc1ec9:0xeb5216b735154083!8m2!3d30.0926188!4d31.2712568!16s%2Fg%2F1tvtw4z_?coh=164777&entry=tt&shorturl=1", "lat": 30.092619, "lng": 31.271257}, {"zone": "Zone 3", "nb": "Amirya", "name": "Amirya HO", "worker": "Hamdy", "phone": "01210148884", "comm": 150, "fam": "No", "map": "https://www.google.com/maps/place/%D8%B4%D8%A7%D8%B1%D8%B9+%D8%A7%D9%84%D9%82%D8%B3%D9%85,+Al+Amereyah+Sharq,+Amreya+1,+Alexandria+Governorate%E2%80%AD/data=!4m6!3m5!1s0x14f5ed3bdb621059:0x71b36283c18b15e!7e2!8m2!3d31.0121996!4d29.804564799999998?utm_source=mstt_1&entry=gps&g_ep=CAESCTExLjc3LjMwMBgAIIgnKgBCAkVH", "lat": 31.0122, "lng": 29.804565}, {"zone": "Zone 3", "nb": "El Nozha", "name": "El Nozha HO (Al Mahkmaa) HO", "worker": "Amr", "phone": "01159797039", "comm": 200, "fam": "", "map": "https://www.google.com/maps/place/%D9%85%D9%83%D8%AA%D8%A8+%D8%B5%D8%AD%D8%A9+%D8%A7%D9%84%D9%86%D8%B2%D9%87%D8%A9%D8%8C+32+%D8%B4%D8%A7%D8%B1%D8%B9+%D8%A7%D9%84%D8%AD%D8%AC%D8%A7%D8%B2%D8%8C+%D8%A7%D9%84%D9%86%D8%B2%D9%87%D8%A9%D8%8C+%D9%82%D8%B3%D9%85+%D8%A7%D9%84%D9%86%D8%B2%D9%87%D8%A9%D8%8C+%D9%85%D8%AD%D8%A7%D9%81%D8%B8%D8%A9+%D8%A7%D9%84%D9%82%D8%A7%D9%87%D8%B1%D8%A9%E2%80%AC+4470012%E2%80%AD/data=!4m2!3m1!1s0x14581592e3de6e57:0x222192f07e6169e8?utm_source=mstt_1&entry=gps&g_ep=CAESCTExLjc2LjMwMBgAIIgnKgBCAkVH", "lat": 30.121757, "lng": 31.372062}, {"zone": "Zone 3", "nb": "El kobba", "name": "1st Koba HO", "worker": "Dr Hany", "phone": "01001504912", "comm": 200, "fam": "", "map": "https://www.google.com/maps/place/%D9%85%D9%83%D8%AA%D8%A8+%D8%B5%D8%AD%D8%A9+%D8%A7%D9%84%D9%82%D8%A8%D8%A9+%D8%A3%D9%88%D9%84+%D8%A7%D9%84%D8%AC%D8%AF%D9%8A%D8%AF,+16+Ahmed+Bassiouny,+Hadaeq+Al+Qubbah,+Hada'iq+El+Qobbah,+Cairo+Governorate+4381187%E2%80%AD/data=!4m2!3m1!1s0x14583ff521ea43e3:0xdc2420327d488361?utm_source=mstt_1&entry=gps&coh=192189&g_ep=CAESCjExLjE0Ny4xMDQYACCenQoqdSw5NDI0MjUyNiw5NDIyMzI5OSw5NDIxNjQxMyw5NDIxMjQ5Niw5NDIwNzM5NCw5NDIwNzUwNiw5NDIwODUwNiw5NDIxNzUyMyw5NDIxODY1Myw5NDIyOTgzOSw0NzA4NzExOCw0NzA4NDM5Myw5NDIxMzIwMEICRUc%3D", "lat": 30.083906, "lng": 31.284803}, {"zone": "Zone 3", "nb": "El kobba", "name": "2nd Koba HO", "worker": "Ayman", "phone": "01110288660", "comm": null, "fam": "No", "map": "https://www.google.com/maps/place/%D9%85%D9%83%D8%AA%D8%A8+%D8%B5%D8%AD%D8%A9+%D8%A7%D9%84%D9%82%D8%A8%D8%A9+%D8%AB%D8%A7%D9%86%D8%8C+3%D8%A3+%D8%A7%D9%84%D8%A7%D9%88%D9%82%D8%A7%D9%81%D8%8C+%D8%A7%D9%84%D9%88%D8%A7%D9%8A%D9%84%D9%8A+%D8%A7%D9%84%D9%83%D8%A8%D9%8A%D8%B1+%D8%B4%D8%B1%D9%82%D8%8C+%D8%AD%D8%AF%D8%A7%D8%A6%D9%82+%D8%A7%D9%84%D9%82%D8%A8%D8%A9%D8%8C%D8%8C+%D9%85%D8%AD%D8%A7%D9%81%D8%B8%D8%A9+%D8%A7%D9%84%D9%82%D8%A7%D9%87%D8%B1%D8%A9%E2%80%AC%E2%80%AD/data=!4m2!3m1!1s0x14583fe7a8e67ea5:0x1093ea44ef371f8a?utm_source=mstt_1&entry=gps&g_ep=CAESCTExLjc2LjMwMBgAIIgnKgBCAkVH", "lat": 30.083906, "lng": 31.284803}, {"zone": "Zone 3", "nb": "El kobba", "name": "El Khaleeg El Masry", "worker": "", "phone": "", "comm": null, "fam": "", "map": "https://www.google.com/maps/place/%D9%85%D8%B1%D9%83%D8%B2+%D8%B5%D8%AD%D8%A9+%D8%A7%D9%84%D8%A7%D8%B3%D8%B1%D8%A9+%D8%A8%D8%A7%D9%84%D8%AE%D9%84%D9%8A%D8%AC+%D8%A7%D9%84%D9%85%D8%B5%D8%B1%D9%89%D8%8C+%D9%85%D9%83%D8%AA%D8%A8+%D8%B5%D8%AD%D8%A9,+El-Khalig+El-Masry,+AZ+Zaytoun+Al+Qebleyah,+Amreya,+Cairo+Governorate+4510010%E2%80%AD/data=!4m2!3m1!1s0x145815c207daa46d:0x7a219dda07126a01?utm_source=mstt_1&entry=gps&coh=192189&g_ep=CAESCjExLjE0Ny4xMDQYACCenQoqdSw5NDI0MjUyNiw5NDIyMzI5OSw5NDIxNjQxMyw5NDIxMjQ5Niw5NDIwNzM5NCw5NDIwNzUwNiw5NDIwODUwNiw5NDIxNzUyMyw5NDIxODY1Myw5NDIyOTgzOSw0NzA4NzExOCw0NzA4NDM5Myw5NDIxMzIwMEICRUc%3D", "lat": 30.083906, "lng": 31.284803}, {"zone": "Zone 3", "nb": "El Demerdash", "name": "El Demerdash", "worker": "Mostafa", "phone": "", "comm": null, "fam": "", "map": "https://www.google.com/maps/place/Health+Bureau+-+El+Demerdash/@30.0736177,31.2733723,17z/data=!3m1!4b1!4m6!3m5!1s0x14583f9a99203139:0xb6684ba962908c40!8m2!3d30.0736177!4d31.2759472!16s%2Fg%2F1tlw6c7s?entry=tts&g_ep=EgoyMDI1MDExNS4wIPu8ASoASAFQAw%3D%3D", "lat": 30.073618, "lng": 31.275947}, {"zone": "Zone 3", "nb": "El waily", "name": "El waily el kebeer HO", "worker": "Dr.Barakat", "phone": "01002746471", "comm": 100, "fam": "No", "map": "https://www.google.com/maps/place/%D9%85%D9%83%D8%AA%D8%A8+%D8%B5%D8%AD%D8%A9+%D8%A7%D9%84%D9%88%D8%A7%D9%8A%D9%84%D9%89+%D8%A7%D9%84%D9%83%D8%A8%D9%8A%D8%B1,+37VP%2B7XG%D8%8C,+%D8%A3%D8%AD%D9%85%D8%AF+%D8%A5%D8%AF%D8%B1%D9%8A%D8%B3%D8%8C,+%D8%A7%D9%84%D9%88%D8%A7%D9%8A%D9%84%D9%8A+%D8%A7%D9%84%D9%83%D8%A8%D9%8A%D8%B1+%D8%B4%D8%B1%D9%82%D8%8C+%D9%82%D8%B3%D9%85+%D8%AD%D8%AF%D8%A7%D8%A6%D9%82+%D8%A7%D9%84%D9%82%D8%A8%D8%A9%D8%8C+%D9%85%D8%AD%D8%A7%D9%81%D8%B8%D8%A9+%D8%A7%D9%84%D9%82%D8%A7%D9%87%D8%B1%D8%A9%E2%80%AC%E2%80%AD/data=!4m2!3m1!1s0x14583fcb034a645b:0xdb483e0509fab9a0?utm_source=mstt_1&entry=gps&g_ep=CAESCTExLjc2LjMwMBgAIIgnKgBCAkVH", "lat": 30.062933, "lng": 31.246442}, {"zone": "Zone 3", "nb": "Abasya", "name": "Abasya HO", "worker": "Barakat", "phone": "01002746471", "comm": 100, "fam": "", "map": "https://www.google.com/maps/place/%D9%85%D9%83%D8%AA%D8%A8+%D8%B5%D8%AD%D8%A9+-+%D8%A7%D9%84%D8%B9%D8%A8%D8%A7%D8%B3%D9%8A%D8%A9%D8%8C+2+%D8%B4+%D8%A7%D9%84%D9%85%D8%B3%D8%AA%D8%B4%D9%81%D9%89+%D8%A7%D9%84%D8%A7%D9%8A%D8%B7%D8%A7%D9%84%D9%89%D8%8C+%D8%B9%D8%A8%D8%A7%D8%B3%D9%8A%D8%A9%D8%8C+%D8%A7%D9%84%D9%88%D8%A7%D9%8A%D9%84%D9%89%D8%8C+%D9%85%D8%AD%D8%A7%D9%81%D8%B8%D8%A9+%D8%A7%D9%84%D9%82%D8%A7%D9%87%D8%B1%D8%A9%E2%80%AC+4391041%E2%80%AD/data=!4m2!3m1!1s0x14583f9ebe67c3c7:0x57a70a48ab3a883a?utm_source=mstt_1&entry=gps&g_ep=CAESCTExLjc5LjMwMRgAIIgnKgBCAkVH", "lat": 30.066995, "lng": 31.280831}, {"zone": "Zone 3", "nb": "Fagala", "name": "Fagala HO", "worker": "Ahmed Elmahdy", "phone": "01110333508", "comm": null, "fam": "", "map": "https://www.google.com/maps/place/%D8%A7%D9%84%D9%88%D8%AD%D8%AF%D8%A9+%D8%A7%D9%84%D8%B5%D8%AD%D9%8A%D8%A9+%D8%A8%D8%A7%D9%84%D9%81%D8%AC%D8%A7%D9%84%D8%A9+-+%D8%A7%D9%84%D8%A7%D8%B2%D8%A8%D9%83%D9%8A%D8%A9,+3+El-Soultan+Shaaban,+Al+Fagalah,+Al+Azbakeya,+Cairo+Governorate+4320301%E2%80%AD/data=!4m2!3m1!1s0x145841ddc0a0094f:0x9494e048c4d63722?utm_source=mstt_1&entry=gps&coh=192189&g_ep=CAESCjExLjEyNi4xMDMYACDXggMqUSw5NDI0MjUyNiw5NDIxMjQ5Niw5NDIwNzUwNiw5NDIwODUwNiw5NDIxNzUyMyw5NDIxODY1Myw0NzA4NzExOCw0NzA4NDM5Myw5NDIxMzIwMEICRUc%3D", "lat": 30.060944, "lng": 31.248476}, {"zone": "Zone 3", "nb": "Madinaty", "name": "Madinaty HO", "worker": "", "phone": "", "comm": null, "fam": "No", "map": "https://www.google.com/maps/place/3MFG%2BJ2M+%D9%85%D9%83%D8%AA%D8%A8+%D8%B5%D8%AD%D8%A9+%D9%85%D8%AF%D9%8A%D9%86%D8%AA%D9%8A,+Second+New+Cairo,+Cairo+Governorate+4771801%E2%80%AD/data=!4m2!3m1!1s0x1457f562481cc5c3:0x6e4c8d9c2e646a99?utm_source=mstt_1&entry=gps&lucs=,47075915,47084393&g_ep=CAESCjExLjEwOS4xMDEYACDXggMqEiw0NzA3NTkxNSw0NzA4NDM5M0ICRUc%3D", "lat": 30.073988, "lng": 31.674846}, {"zone": "Zone 3", "nb": "Al shorouk", "name": "Al Shorouk 100m HO", "worker": "Ossama", "phone": "01284881549", "comm": 200, "fam": "No", "map": "https://maps.google.com/?q=5M72+JQF+ElShorouk+Health+Office+100+m,+El+Shorouk,+Cairo+Governorate+4932444&ftid=0x1457f78cd6102c77:0xa4906cdc6d74706b&hl=en-EG&gl=eg&entry=gps&lucs=,47071704&g_ep=CAISBjYuNzkuMxgAINeCAyoJLDQ3MDcxNzA0QgJFRw%3D%3D&g_st=ic", "lat": 30.16405, "lng": 31.651921}, {"zone": "Zone 3", "nb": "Badr", "name": "مركز طبي الحي الاول مدينة بدر", "worker": "", "phone": "", "comm": null, "fam": "No", "map": "https://www.google.com/maps/place/4PQF%2B3CV+%D9%85%D9%83%D8%AA%D8%A8+%D8%B5%D8%AD%D8%A9+%D8%A7%D9%84%D8%AD%D9%8A+%D8%A7%D9%84%D8%A3%D9%88%D9%84%D8%8C+%D8%A8%D8%AF%D8%B1%D8%8C+%D9%85%D8%AD%D8%A7%D9%81%D8%B8%D8%A9+%D8%A7%D9%84%D9%82%D8%A7%D9%87%D8%B1%D8%A9%E2%80%AC+4951330%E2%80%AD/data=!4m2!3m1!1s0x1457f0b38c3ba6b3:0xf6911e591569fa01?utm_source=mstt_1&entry=gps&g_ep=CAESCTExLjc5LjMwMRgAINeCAyoAQgJFRw%3D%3D", "lat": 30.130457, "lng": 31.718982}, {"zone": "Zone 3", "nb": "Airport", "name": "Carga at the Airport", "worker": "Tal3at", "phone": "01008437595", "comm": null, "fam": "", "map": "https://www.google.com/maps/place/%D8%A7%D9%84%D9%86%D8%B2%D9%87%D8%A9%D8%8C+%D8%B4%D9%8A%D8%B1%D8%A7%D8%AA%D9%88%D9%86+%D8%A7%D9%84%D9%85%D8%B7%D8%A7%D8%B1%D8%8C+%D9%82%D8%B3%D9%85+%D8%A7%D9%84%D9%86%D8%B2%D9%87%D8%A9%D8%8C+%D9%85%D8%AD%D8%A7%D9%81%D8%B8%D8%A9+%D8%A7%D9%84%D9%82%D8%A7%D9%87%D8%B1%D8%A9%E2%80%AC+4475001%E2%80%AD/data=!4m6!3m5!1s0x14581706c7483357:0x5253f7b9ccda8adb!7e2!8m2!3d30.1169914!4d31.4072325?utm_source=mstt_1&entry=gps&g_ep=CAESCTExLjc5LjMwMRgAINeCAyoAQgJFRw%3D%3D", "lat": 30.116991, "lng": 31.407232}, {"zone": "Zone 4", "nb": "Smouha", "name": "Smouha health office", "worker": "", "phone": "", "comm": null, "fam": "No", "map": "https://www.google.com/maps/place/Smouha's+Health+Bureau,+%D8%B4+Zaki+Ragab,+%D8%B3%D9%85%D9%88%D8%AD%D8%A9%D8%8C+Sidi+Gaber,+Alexandria+Governorate+5432012%E2%80%AD/data=!4m2!3m1!1s0x14f5c484a4eab957:0xe17e3ef32f5825e7?utm_source=mstt_1&entry=gps&g_ep=CAESCTExLjc3LjMwMBgAIIgnKgBCAkVH", "lat": 31.20714, "lng": 29.938302}, {"zone": "Zone 4", "nb": "Babes", "name": "Babes 2 HO", "worker": "Ragab", "phone": "0122089819", "comm": null, "fam": "No", "map": "https://maps.google.com/?q=31.1865880,30.0066680&hl=en-EG&gl=eg&entry=gps&lucs=47067413&g_ep=CAISBjYuNjQuMxgAINeCAyoINDcwNjc0MTNCAkVH&g_st=ic", "lat": 31.232767, "lng": 29.972111}, {"zone": "Zone 4", "nb": "Sidi Gaber", "name": "Sidi Gaber HO", "worker": "Basuny", "phone": "01068600339", "comm": 100, "fam": "No", "map": "https://maps.google.com/maps?q=31.2000220,29.9251440&hl=en-EG&gl=eg&entry=gps&lucs=,47071704&g_st=ic", "lat": 31.212665, "lng": 29.936197}, {"zone": "Zone 4", "nb": "Moharram Bey", "name": "Moharram Bey HO", "worker": "", "phone": "", "comm": 0, "fam": "", "map": "https://www.google.com/maps/place/Health+Bureau+-+Moharram+Bey/@31.1976567,29.9164161,17z/data=!3m1!4b1!4m6!3m5!1s0x14f5c385585182d7:0x3bb374ad1b999b55!8m2!3d31.1976567!4d29.9164161!16s%2Fg%2F1tf920zw?entry=tts&shorturl=1", "lat": 31.197657, "lng": 29.916416}, {"zone": "Zone 2", "nb": "Warraq", "name": "Warraq El Arab HO", "worker": "Unknown", "phone": "", "comm": null, "fam": "Unknown", "map": "https://www.google.com/maps/place/%D9%85%D9%83%D8%AA%D8%A8+%D8%B5%D8%AD%D8%A9+%D9%88%D8%B1%D8%A7%D9%82+%D8%A7%D9%84%D8%B9%D8%B1%D8%A8/data=!4m2!3m1!1s0x145841ff2bd10807:0x527578f22b06c037", "lat": 30.1039558, "lng": 31.2124826}, {"zone": "Zone 2", "nb": "Imbaba", "name": "Imbaba 2 HO", "worker": "Unknown", "phone": "", "comm": null, "fam": "Unknown", "map": "https://www.google.com/maps/place/Health+Bureau+-+Imbaba+2/data=!4m2!3m1!1s0x145841ac346b9981:0xa1c73c4b03d2e9fc", "lat": 30.0889622, "lng": 31.2102759}, {"zone": "Zone 2", "nb": "Madinet El Ommal", "name": "Madinet El Ommal - El Tahrir HO", "worker": "Unknown", "phone": "", "comm": null, "fam": "Unknown", "map": "https://www.google.com/maps/place/%D9%85%D9%83%D8%AA%D8%A8+%D8%B5%D8%AD%D8%A9+-%D9%85%D8%AF%D9%8A%D9%86%D8%A9+%D8%A7%D9%84%D8%B9%D9%85%D8%A7%D9%84-%D8%A7%D9%84%D8%AA%D8%AD%D8%B1%D9%8A%D8%B1/data=!4m2!3m1!1s0x145840554298b99d:0xac563685e13a2491", "lat": 30.0799457, "lng": 31.2187121}, {"zone": "Zone 4", "nb": "Ibrahimeya", "name": "Health Bureau - El Ibrahimeya", "worker": "Wael", "phone": "01228169207", "comm": 100, "fam": "No", "map": "https://maps.app.goo.gl/v4oWzeFrPC3vfc4R9?g_st=ic", "lat": 31.208097, "lng": 29.929354, "note": "Covers almost the whole Shatby area"}, {"zone": "Zone 2", "nb": "Rod El Farag", "name": "El Hadary HO", "worker": "", "phone": "", "comm": null, "fam": "No", "map": "https://maps.app.goo.gl/Jp6rCZfXBWDhfwjS7?g_st=ic", "lat": 30.072524, "lng": 31.235293, "note": "Hospital covered: Al Raei Al Saleh Hospital (Rod El Farag). Area: Rod El Farag."}];
+
+const I18N = {
+  en: {
+    title: 'HO Finder',
+    sub: 'Pick any HO from the list, or share your location to find the nearest one.',
+    browseH: 'Choose an HO', searchPh: 'Search HO name',
+    locH: 'Find the nearest HO', geo: 'Use my current location', locating: 'Locating...',
+    linkHint: 'Or paste a Google Maps link (or type coordinates)', find: 'Find HO', reading: 'Reading link...',
+    call: 'Call the POC', wa: 'WhatsApp the POC', map: 'Open HO on the map',
+    resNearest: 'Nearest HO', resSelected: 'HO details',
+    poc: 'POC Name', phone: 'Phone', comm: 'Commission', fam: 'First Degree Needed?', note: 'Note',
+    unknown: 'Unknown', yes: 'Yes', no: 'No', egp: 'EGP', about: 'About ', away: ' away',
+    nextPre: 'Next nearest HOs: ', then: ', then ', noMatch: 'No HO matches that search.',
+    youAt: 'You are at ', itsHO: '. Its responsible HO is ', notNearest: ', not the nearest one (',
+    errNoGeo: 'Location unavailable', errNoGeoMsg: "This browser doesn't support location. Paste a Google Maps link below.",
+    errRef: 'Location unavailable', errRefMsg: 'The browser refused to share your location. Open the place in Google Maps and paste the link below instead.',
+    errLink: "Couldn't read that link", errLinkMsg: "Try 'Use my current location' above, or open the link in Google Maps, copy the full address bar link (or long-press the pin and copy the coordinates), and paste it here.",
+    errRead: "Can't read that", errReadMsg: 'Paste a Google Maps link or type coordinates like 30.0444, 31.2357.',
+    zone: 'Zone', toggle: 'عربي', dark: 'Dark', light: 'Light'
+  }
+};
+let lang = 'en';
+if (!I18N[lang]) lang = 'en';
+const t = k => I18N[lang][k];
+let dark = false;
+try { dark = localStorage.getItem('hoDark') === '1'; } catch (e) {}
+let lastView = null; // {o, km, ranked, hospNote}
+
+function norm(s) {
+  return (s || '').toString().toLowerCase()
+    .replace(/[\u064B-\u0652\u0640]/g, '')
+    .replace(/[أإآٱ]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه')
+    .replace(/[^a-z0-9\u0600-\u06FF\s]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+function zoneLabel(z) { return z; }
+function dName(o) { return o.name; }
+function dArea(o) { return o.nb; }
+
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+  document.querySelectorAll('[data-i]').forEach(el => { el.textContent = t(el.getAttribute('data-i')); });
+  document.querySelectorAll('[data-iph]').forEach(el => { el.placeholder = t(el.getAttribute('data-iph')); });
+  setGeo(t('geo'));
+  document.getElementById('goBtn').textContent = t('find');
+  document.body.classList.toggle('dark', dark);
+  document.getElementById('dn').checked = dark;
+  renderList();
+  if (lastView) renderOffice(lastView);
+}
+
+function haversineKm(a, b) {
+  const R = 6371;
+  const dLat = (b.lat - a.lat) * Math.PI / 180;
+  const dLng = (b.lng - a.lng) * Math.PI / 180;
+  const s = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * Math.PI / 180) * Math.cos(b.lat * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(s));
+}
+
+function parseCoords(text) {
+  const tx = text.trim();
+  let m = tx.match(/!3d(-?\d+\.?\d*)!4d(-?\d+\.?\d*)/);
+  if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+  m = tx.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+  if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+  m = tx.match(/[?&]q=(-?\d+\.?\d*)[,+%2C]+(-?\d+\.?\d*)/i);
+  if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+  m = tx.match(/[?&]ll=(-?\d+\.?\d*)[,+%2C]+(-?\d+\.?\d*)/i);
+  if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+  m = tx.match(/^(-?\d+\.?\d*)[,\s]+(-?\d+\.?\d*)$/);
+  if (m) return { lat: parseFloat(m[1]), lng: parseFloat(m[2]) };
+  return null;
+}
+
+function kmLabel(km) {
+  if (km < 1) return Math.round(km * 1000) + " m";
+  return km.toFixed(1) + " km";
+}
+
+const geoBtn = document.getElementById('geoBtn');
+const GEO_ICON = '<svg class="gi" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3.2" fill="currentColor"/><circle cx="12" cy="12" r="7.5"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3"/></svg>';
+function setGeo(x) { document.getElementById('slLbl').textContent = x; }
+setGeo(t('geo'));
+const goBtn = document.getElementById('goBtn');
+const linkInput = document.getElementById('linkInput');
+const errorBox = document.getElementById('errorBox');
+const errorTitle = document.getElementById('errorTitle');
+const errorMsg = document.getElementById('errorMsg');
+const resultBox = document.getElementById('resultBox');
+const searchInput = document.getElementById('searchInput');
+const officeList = document.getElementById('officeList');
+
+function showError(title, msg) {
+  errorTitle.textContent = title;
+  errorMsg.textContent = msg;
+  errorBox.style.display = 'block';
+}
+
+// ---- Browse list ----
+let selectedName = null;
+function renderList() {
+  const q = norm(searchInput.value);
+  const words = q.split(' ').filter(Boolean);
+  const items = OFFICES.filter(o => {
+    const hay = norm(o.name + ' ' + o.nb + ' ' + o.zone + ' ' + (o.worker || ''));
+    return words.every(w => hay.indexOf(w) !== -1);
+  });
+  if (!items.length) { officeList.innerHTML = '<div class="empty">' + t('noMatch') + '</div>'; return; }
+  let html = '', lastZone = null;
+  items.forEach(o => {
+    if (o.zone !== lastZone) { html += '<div class="zh">' + zoneLabel(o.zone) + '</div>'; lastZone = o.zone; }
+    html += '<button type="button" class="item' + (o.name === selectedName ? ' sel' : '') + '" data-n="' + OFFICES.indexOf(o) + '">' +
+      escapeHtml(dName(o)) + '<small>' + escapeHtml(dArea(o)) + '</small></button>';
+  });
+  officeList.innerHTML = html;
+}
+function escapeHtml(s) { return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+searchInput.addEventListener('input', renderList);
+officeList.addEventListener('click', e => {
+  const b = e.target.closest('.item');
+  if (!b) return;
+  const o = OFFICES[parseInt(b.getAttribute('data-n'), 10)];
+  selectedName = o.name;
+  errorBox.style.display = 'none';
+  lastView = { o: o, km: null, ranked: null, hospNote: '' };
+  renderOffice(lastView);
+  renderList();
+  resultBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+
+// ---- Result card ----
+function renderOffice(v) {
+  const o = v.o;
+  document.getElementById('resH').textContent = v.km === null ? t('resSelected') : t('resNearest');
+  const hn = document.getElementById('hospNote');
+  hn.textContent = v.hospNote || '';
+  hn.style.display = v.hospNote ? 'block' : 'none';
+  document.getElementById('officeName').textContent = dName(o);
+  document.getElementById('officeArea').textContent = zoneLabel(o.zone) + " · " + dArea(o);
+  const pill = document.getElementById('distPill');
+  if (v.km === null) pill.style.display = 'none';
+  else { pill.style.display = ''; pill.textContent = t('about') + kmLabel(v.km) + t('away'); }
+  const facts = [
+    [t('poc'), o.worker || t('unknown')],
+    [t('phone'), o.phone || t('unknown')],
+    [t('comm'), o.comm === null ? t('unknown') : o.comm + ' ' + t('egp')],
+    [t('fam'), o.fam === 'Yes' ? t('yes') : (o.fam === 'No' ? t('no') : t('unknown'))],
+  ];
+  if (o.note) facts.push([t('note'), o.note]);
+  document.getElementById('factsBody').innerHTML = facts.map(f =>
+    '<tr><td>' + escapeHtml(f[0]) + '</td><td>' + escapeHtml(f[1]) + '</td></tr>').join('');
+  const callBtn = document.getElementById('callBtn');
+  if (o.phone) { callBtn.href = 'tel:+2' + o.phone; callBtn.style.display = ''; } else callBtn.style.display = 'none';
+  const waBtn = document.getElementById('waBtn');
+  if (o.phone) { waBtn.href = 'https://wa.me/2' + o.phone; waBtn.style.display = ''; } else waBtn.style.display = 'none';
+  const mapBtn = document.getElementById('mapBtn');
+  if (o.map) { mapBtn.href = o.map; mapBtn.style.display = ''; } else mapBtn.style.display = 'none';
+  let next = '';
+  const r = v.ranked;
+  if (r && r.length > 1) {
+    next = t('nextPre') + dName(r[1].o) + ' (' + kmLabel(r[1].km) + ')';
+    if (r[2]) next += t('then') + dName(r[2].o) + ' (' + kmLabel(r[2].km) + ')';
+    next += '.';
+  }
+  document.getElementById('nextLine').textContent = next;
+  resultBox.style.display = 'block';
+}
+
+const HOSPITALS = [{"n":"Cleopatra Hospital","lat":30.0930721,"lng":31.3298159,"o":["Almaza HO"]}];
+const HOSPITAL_RADIUS_KM = 0.3;
+
+function locate(pos) {
+  let ranked = OFFICES
+    .map(o => ({ o, km: haversineKm(pos, o) }))
+    .sort((a, b) => a.km - b.km);
+  let hospNote = '';
+  let near = null;
+  HOSPITALS.forEach(h => { const d = haversineKm(pos, h); if (d <= HOSPITAL_RADIUS_KM && (!near || d < near.d)) near = { h: h, d: d }; });
+  if (near) {
+    const own = near.h.o.map(n => ranked.find(r => r.o.name === n)).filter(Boolean);
+    if (own.length) {
+      const first = ranked[0];
+      hospNote = "You're at " + near.h.n + '. This hospital belongs to ' + own[0].o.name;
+      hospNote += first === own[0] ? '.' : ', even though ' + first.o.name + ' is closer (' + kmLabel(first.km) + ' away).';
+      ranked = own.concat(ranked.filter(r => own.indexOf(r) === -1));
+    }
+  }
+  ranked = ranked.slice(0, 3);
+  errorBox.style.display = 'none';
+  selectedName = ranked[0].o.name;
+  lastView = { o: ranked[0].o, km: ranked[0].km, ranked: ranked, hospNote: hospNote };
+  renderOffice(lastView);
+  renderList();
+  resultBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+geoBtn.addEventListener('click', () => {
+  if (!('geolocation' in navigator)) { showError(t('errNoGeo'), t('errNoGeoMsg')); return; }
+  geoBtn.disabled = true;
+  setGeo(t('locating'));
+  navigator.geolocation.getCurrentPosition(
+    p => { geoBtn.disabled = false; setGeo(t('geo')); locate({ lat: p.coords.latitude, lng: p.coords.longitude }); },
+    () => { geoBtn.disabled = false; setGeo(t('geo')); showError(t('errRef'), t('errRefMsg')); },
+    { enableHighAccuracy: true, timeout: 10000 }
+  );
+});
+
+const RESOLVER = 'https://script.google.com/macros/s/AKfycbywGfAyEc2Qjh21i0z67ckzOsSlhtMZMCcRYPhN-qCDQw1nWa7Ilx4aPtdlK2yqwfOl/exec';
+
+goBtn.addEventListener('click', async () => {
+  const text = linkInput.value.trim();
+  const coords = parseCoords(text);
+  if (coords) { locate(coords); return; }
+  if (/^(https?:\/\/)?[^\s]*(goo\.gl|google\.[a-z.]+)\//i.test(text)) {
+    goBtn.disabled = true; goBtn.textContent = t('reading');
+    errorBox.style.display = 'none';
+    try {
+      const ctl = new AbortController();
+      const timer = setTimeout(() => ctl.abort(), 20000);
+      const r = await fetch(RESOLVER + '?url=' + encodeURIComponent(text), { signal: ctl.signal });
+      clearTimeout(timer);
+      const d = await r.json();
+      if (d && d.ok && isFinite(d.lat) && isFinite(d.lng)) {
+        goBtn.disabled = false; goBtn.textContent = t('find');
+        locate({ lat: d.lat, lng: d.lng });
+        return;
+      }
+    } catch (e) { /* fall through */ }
+    goBtn.disabled = false; goBtn.textContent = t('find');
+    showError(t('errLink'), t('errLinkMsg'));
+    return;
+  }
+  showError(t('errRead'), t('errReadMsg'));
+});
+linkInput.addEventListener('keydown', e => { if (e.key === 'Enter') goBtn.click(); });
+
+document.getElementById('dn').addEventListener('change', e => {
+  dark = e.target.checked;
+  try { localStorage.setItem('hoDark', dark ? '1' : '0'); } catch (err) {}
+  applyLang();
+});
+applyLang();
+
+(function () {
+  const slide = document.getElementById('slide'), hd = document.getElementById('slHandle'), fill = document.getElementById('slFill'), lbl = slide.querySelector('.lbl');
+  let drag = false, sx = 0, x = 0, max = 0;
+  const set = v => { x = Math.max(0, Math.min(max, v)); hd.style.transform = 'translateX(' + x + 'px)'; fill.style.width = (x + 54) + 'px'; lbl.style.opacity = Math.max(0, 1 - (x / max) * 1.6); };
+  const reset = () => { slide.classList.add('snap'); slide.classList.remove('busy'); max = slide.clientWidth - 58; set(0); lbl.style.opacity = 1; fill.style.width = '0px'; };
+  function done() {
+    max = slide.clientWidth - 58; slide.classList.add('snap'); set(max); slide.classList.add('busy'); lbl.style.opacity = 1; fill.style.width = '100%';
+    if (!geoBtn.disabled) geoBtn.click();
+  }
+  hd.addEventListener('pointerdown', e => { e.preventDefault(); if (slide.classList.contains('busy')) return; drag = true; max = slide.clientWidth - 58; sx = e.clientX - x; slide.classList.remove('snap'); hd.setPointerCapture(e.pointerId); });
+  hd.addEventListener('pointermove', e => { if (drag) set(e.clientX - sx); });
+  const end = () => { if (!drag) return; drag = false; if (x >= max * 0.85) done(); else reset(); };
+  hd.addEventListener('pointerup', end); hd.addEventListener('pointercancel', end);
+  hd.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!slide.classList.contains('busy')) done(); } });
+  new MutationObserver(() => { if (!geoBtn.disabled && slide.classList.contains('busy')) setTimeout(reset, 400); }).observe(geoBtn, { attributes: true, attributeFilter: ['disabled'] });
+  window.addEventListener('resize', () => { if (!drag && !slide.classList.contains('busy')) { max = slide.clientWidth - 58; set(0); } });
+})();
+</script>
+</body>
+</html>
